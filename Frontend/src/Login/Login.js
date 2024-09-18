@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get, child } from "firebase/database";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../Firebase"; // Import correct services
+import { db } from "../Firebase"; 
 import "./login.css";
 import img from "../Assests/college_logo.png";
 import Slider from "../Components/slider";
@@ -12,15 +11,21 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
+  const [dept, setDept] = useState("");
+  const [year, setYear] = useState(""); 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    addStudent();
-
+    console.log('Username:', username);
+  console.log('Password:', password);
+  console.log('Role:', role);
+  console.log('Dept:', dept);
+  console.log('Year:', year);
     try {
-      // Reference the path to the user data in Firebase Realtime Database
-      const userRef = ref(db, `nscet/hod(cse)/student-4th/${username}`);
+      const userRef = role === "Students" 
+        ? ref(db, `nscet/${dept}/${role}/${year}/${username}`)
+        : ref(db, `nscet/${dept}/${role}/${username}`);
       
       // Fetch the snapshot from Firebase
       const snapshot = await get(userRef);
@@ -29,16 +34,16 @@ const Login = () => {
         const userData = snapshot.val();
 
         // Assuming that password is stored in Firebase and comparing it
-        if (userData.password === password && userData.role === role) {
+        if (userData.password === password) {
           // Redirect based on role
-          if (userData.role === "student") {
-            navigate("/student", { state: { userData } });
-          } else if (userData.role === "faculty") {
-            navigate("/staff", { state: { userData } });
-          } else if (userData.role === "hod") {
-            navigate("/hod", { state: { userData } });
-          } else if (userData.role === "principal") {
-            navigate("/principal", { state: { userData } });
+          if (role === "Students") {
+            navigate("/student", { state: { userData,username } });
+          } else if (role === "Staff") {
+            navigate("/staff", { state: { userData,username } });
+          } else if (role === "hod") {
+            navigate("/hod", { state: { userData,username } });
+          } else if (role === "principal") {
+            navigate("/principal", { state: { userData ,username} });
           } else {
             alert("Invalid role");
           }
@@ -59,7 +64,7 @@ const Login = () => {
       <div className="header-container">
         <div className="header-content">
           <img
-            src={img} // Use the imported image
+            src={img} 
             alt="College Logo"
             className="college-logo"
           />
@@ -110,12 +115,49 @@ const Login = () => {
                 required
               >
                 <option value="">Select Role</option>
-                <option value="student">Student</option>
-                <option value="faculty">Faculty</option>
+                <option value="Students">Student</option>
+                <option value="Staff">Faculty</option>
                 <option value="hod">HOD</option>
                 <option value="principal">Principal</option>
               </select>
             </div>
+
+            {/* Conditionally show department and year input for student/faculty/HOD */}
+            {(role === "Students" || role === "Staff" || role === "hod") && (
+              <>
+                <div className="input-group">
+                  <label>Select Dept</label>
+                  <select
+                    value={dept}
+                    onChange={(e) => setDept(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    <option value="CSE">CSE</option>
+                    <option value="CIVIL">CIVIL</option>
+                    <option value="MECH">MECH</option>
+                    <option value="ECE">ECE</option>
+                  </select>
+                </div>
+
+                {role === "Students" && (
+                  <div className="input-group">
+                    <label>Select Year</label>
+                  <select
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Department</option>
+                    <option value="Fourth">Fourth</option>
+                    <option value="Third">Third</option>
+                    <option value="Second">Second</option>
+                  </select>
+                  </div>
+                )}
+              </>
+            )}
+
             <button type="submit" className="login-btn">
               Login
             </button>
